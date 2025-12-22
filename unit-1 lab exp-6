@@ -1,0 +1,26 @@
+import random, math
+
+ads = [0.05, 0.13, 0.09, 0.16, 0.11]
+N, K = 3000, len(ads)
+
+def bandit(mode):
+    Q, C = [0]*K, [0]*K
+    S, F = [1]*K, [1]*K
+    clicks = 0
+    for t in range(N):
+        if mode == "EG":
+            a = random.randint(0,K-1) if random.random()<0.1 else max(range(K), key=lambda i: Q[i]/(C[i]+1e-9))
+        elif mode == "UCB":
+            a = max(range(K), key=lambda i: Q[i]/(C[i]+1e-9) + math.sqrt(2*math.log(t+1)/(C[i]+1e-9)))
+        else:
+            a = max(range(K), key=lambda i: random.betavariate(S[i], F[i]))
+        r = random.random() < ads[a]
+        C[a] += 1; Q[a] += r; clicks += r
+        if mode == "TS": S[a]+=r; F[a]+=1-r
+    return clicks/N
+
+eg = bandit("EG")
+ucb = bandit("UCB")
+ts = bandit("TS")
+
+print("EG:", eg, "UCB:", ucb, "TS:", ts)
