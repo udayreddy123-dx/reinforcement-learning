@@ -1,0 +1,26 @@
+import random
+
+states = [0, 1]            # 0: Market Down, 1: Market Up
+actions = [0, 1]           # 0: Bond, 1: Stock
+
+V = {s: 0.0 for s in states}
+alpha = 0.1
+gamma = 0.9
+
+def environment(state, action):
+    next_state = random.choice(states)
+    if action == 1:       # Stock
+        reward = 2 if state == 1 else -1
+    else:                 # Bond
+        reward = 1
+    return next_state, reward
+
+for _ in range(1000):
+    state = random.choice(states)
+    action = random.choice(actions)
+    next_state, reward = environment(state, action)
+
+    # TD(0) update
+    V[state] += alpha * (reward + gamma * V[next_state] - V[state])
+
+print("State Values:", V)
