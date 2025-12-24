@@ -1,0 +1,28 @@
+import numpy as np
+
+# Actions: 0=stay, 1=left, 2=right
+actions = 3
+state_size = 3   # speeds in left, current, right lanes
+W = np.random.randn(state_size, actions) * 0.01
+lr = 0.01
+
+def softmax(x):
+    e = np.exp(x - np.max(x))
+    return e / e.sum()
+
+for episode in range(200):
+    # Random traffic speeds
+    state = np.random.rand(state_size)
+    probs = softmax(state @ W)
+
+    action = np.random.choice(actions, p=probs)
+    reward = state[action] - 0.05 if action != 1 else state[action]
+
+    # Policy gradient update
+    grad = -probs
+    grad[action] += 1
+    W += lr * reward * np.outer(state, grad)
+
+    if episode % 50 == 0:
+        print(f"Episode {episode}, Reward: {reward:.2f}")
+
