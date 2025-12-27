@@ -1,0 +1,104 @@
+import random
+import math
+import matplotlib.pyplot as plt
+
+# Environment size
+WIDTH, HEIGHT = 100, 100
+
+# Obstacles (x, y, radius)
+obstacles = [
+    (30, 40, 6),
+    (60, 60, 8),
+    (50, 20, 5),
+    (80, 40, 6)
+]
+
+# Task points (soil sampling / weed detection)
+tasks = [(90, 90), (20, 80)]
+
+start = (5, 5)
+goal = (90, 90)
+STEP_SIZE = 4
+MAX_ITER = 1000
+
+class Node:
+    def __init__(self, x, y, parent=None):
+        self.x = x
+        self.y = y
+        self.parent = parent
+
+def distance(a, b):
+    return math.hypot(a.x - b.x, a.y - b.y)
+
+def collision(x, y):
+    for ox, oy, r in obstacles:
+        if math.hypot(x - ox, y - oy) <= r:
+            return True
+    return False
+
+def get_nearest(tree, rnd):
+    return min(tree, key=lambda node: math.hypot(node.x - rnd[0], node.y - rnd[1]))
+
+def steer(from_node, to_point):
+    theta = math.atan2(to_point[1] - from_node.y, to_point[0] - from_node.x)
+    new_x = from_node.x + STEP_SIZE * math.cos(theta)
+    new_y = from_node.y + STEP_SIZE * math.sin(theta)
+    return new_x, new_y
+
+def rrt():
+    tree = [Node(start[0], start[1])]
+    
+    for _ in range(MAX_ITER):
+        rnd = (random.uniform(0, WIDTH), random.uniform(0, HEIGHT))
+        nearest = get_nearest(tree, rnd)
+        new_x, new_y = steer(nearest, rnd)
+        
+        if not collision(new_x, new_y):
+            new_node = Node(new_x, new_y, nearest)
+            tree.append(new_node)
+            
+            if math.hypot(new_x - goal[0], new_y - goal[1]) < STEP_SIZE:
+                return new_node, tree
+    return None, tree
+
+def extract_path(node):
+    path = []
+    while node:
+        path.append((node.x, node.y))
+        node = node.parent
+    return path[::-1]
+
+# Run RRT
+goal_node, tree = rrt()
+path = extract_path(goal_node)
+
+# Visualization
+plt.figure(figsize=(8, 8))
+
+# Obstacles
+for ox, oy, r in obstacles:
+    circle = plt.Circle((ox, oy), r, color='brown')
+    plt.gca().add_patch(circle)
+
+# RRT Tree
+for node in tree:
+    if node.parent:
+        plt.plot([node.x, node.parent.x], [node.y, node.parent.y], 'g-', alpha=0.3)
+
+# Path
+px, py = zip(*path)
+plt.plot(px, py, 'r-', linewidth=3, label='Planned Path')
+
+# Tasks
+for tx, ty in tasks:
+    plt.plot(tx, ty, 'bs', markersize=8)
+
+plt.plot(start[0], start[1], 'go', label='Start')
+plt.plot(goal[0], goal[1], 'ro', label='Goal')
+
+plt.title("Autonomous Agricultural Robot Navigation using RRT")
+plt.xlabel("Field X")
+plt.ylabel("Field Y")
+plt.legend()
+plt.grid(True)
+plt.show()
