@@ -1,0 +1,28 @@
+import random
+import numpy as np
+
+# Grid world: 0 = unexplored, 1 = explored, -1 = obstacle
+grid_size = 6
+grid = np.zeros((grid_size, grid_size))
+grid[2, 3] = grid[4, 1] = -1  # obstacles
+
+robots = [(0, 0), (5, 5)]
+actions = [(-1,0),(1,0),(0,-1),(0,1)]
+
+def move(robot):
+    x, y = robot
+    dx, dy = random.choice(actions)
+    nx, ny = x + dx, y + dy
+    if 0 <= nx < grid_size and 0 <= ny < grid_size and grid[nx, ny] != -1:
+        return nx, ny
+    return x, y
+
+for step in range(30):
+    for i in range(len(robots)):
+        robots[i] = move(robots[i])
+        x, y = robots[i]
+        grid[x, y] = 1  # scan environment
+
+print("Final Map:\n", grid)
+coverage = np.sum(grid == 1)
+print("Explored cells:", coverage)
